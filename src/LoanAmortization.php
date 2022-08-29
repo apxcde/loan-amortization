@@ -2,7 +2,7 @@
 
 namespace Apxcde\LoanAmortization;
 
-class LoanAmortizationClass
+class LoanAmortization
 {
     private float $loan_amount;
     private mixed $term_years;
