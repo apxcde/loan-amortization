@@ -4,17 +4,16 @@ namespace Apxcde\LoanAmortization;
 
 class LoanAmortizationClass
 {
-    private $loan_amount;
-    private $term_years;
-    private $interest;
-    private $term_months;
+    private float $loan_amount;
+    private mixed $term_years;
+    private int|float $interest;
+    private int $term_months;
     private string $currency = "XXX";
-    private $principal;
-    private $balance;
-    private $term_pay;
-    private $date;
-    private $remaining_months;
-    public $results;
+    private mixed $balance;
+    private mixed $term_pay;
+    private mixed $date;
+    private mixed $remaining_months;
+    public array $results;
 
     public function __construct($data)
     {
@@ -61,7 +60,7 @@ class LoanAmortizationClass
             return true;
         } else {
             echo "<div style='background-color:#ccc;padding:0.5em;'>";
-            echo '<p style="color:red;margin:0.5em 0em;font-weight:bold;background-color:#fff;padding:0.2em;">Missing Values</p>';
+            echo '<p style="color: red; margin:0.5em 0em; font-weight: bold; background-color: #fff; padding: 0.2em;">Missing Values</p>';
             foreach ($validate_data as $key => $value) {
                 echo ":: Value <b>$key</b> is missing.<br>";
             }
@@ -89,13 +88,13 @@ class LoanAmortizationClass
         $this->term_pay = $this->loan_amount * ($this->interest / (1 - pow((1 + $this->interest), -$this->term_months)));
         $interest = $this->loan_amount * $this->interest;
 
-        $this->principal = $this->term_pay - $interest;
-        $this->balance = $this->loan_amount - $this->principal;
+        $principal = $this->term_pay - $interest;
+        $this->balance = $this->loan_amount - $principal;
 
         return [
             'payment' => $this->term_pay,
             'interest' => $interest,
-            'principal' => $this->principal,
+            'principal' => $principal,
             'balance' => $this->balance,
             'date' => $this->date->format('Y-m-d'),
         ];
