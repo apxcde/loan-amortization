@@ -132,5 +132,4 @@ class LoanAmortizationClass
 
         return $schedule;
     }
-
 }
