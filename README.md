@@ -18,8 +18,22 @@ composer require apxcde/loan-amortization
 ## Usage
 
 ```php
-$skeleton = new Apxcde\LoanAmortization();
-echo $skeleton->echoPhrase('Hello, Apxcde!');
+use Apxcde\LoanAmortization\LoanAmortization;
+
+$amount = 200000;
+$termYears = 5;
+$annualInterestRate = 12;
+
+$loan_data = [
+    'loan_amount' => (float) $amount,
+    'term_years' => $termYears,
+    'interest' => $annualInterestRate,
+    'term_months' => $termYears * 12,
+    'starting_date' => Carbon::now(),
+    'remaining_months' => $termYears * 12,
+];
+
+$loan_calculation = new LoanAmortization($loan_data);
 ```
 
 ## Testing
