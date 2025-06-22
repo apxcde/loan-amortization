@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Apxcde\LoanAmortization;
 
@@ -7,10 +8,10 @@ class LoanAmortization
     private float $loan_amount;
     private int|float $interest;
     private int $term_months;
-    private mixed $balance;
-    private mixed $term_pay;
-    private mixed $date;
-    private mixed $remaining_months;
+    private float $balance;
+    private float $term_pay;
+    private \DateTimeInterface $date;
+    private int $remaining_months;
     public array $results;
 
     public function __construct(array $data)
