@@ -72,10 +72,9 @@ it('generates schedule with paid months when partial payments were made', functi
 
     expect(count($schedule))->toBe(12);
 
-    $paid = array_filter($schedule, fn($row) => $row[0] === 'paid');
-    $notPaid = array_filter($schedule, fn($row) => $row[0] === 'not_paid');
+    $paid = array_filter($schedule, fn ($row) => $row[0] === 'paid');
+    $notPaid = array_filter($schedule, fn ($row) => $row[0] === 'not_paid');
 
     expect(count($paid))->toBe(6)
         ->and(count($notPaid))->toBe(6);
 });
-
