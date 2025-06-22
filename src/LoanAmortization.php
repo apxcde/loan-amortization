@@ -5,10 +5,8 @@ namespace Apxcde\LoanAmortization;
 class LoanAmortization
 {
     private float $loan_amount;
-    private mixed $term_years;
     private int|float $interest;
     private int $term_months;
-    private string $currency = "XXX";
     private mixed $balance;
     private mixed $term_pay;
     private mixed $date;
@@ -19,7 +17,6 @@ class LoanAmortization
     {
         if ($this->validate($data)) {
             $this->loan_amount = (float) $data['loan_amount'];
-            $this->term_years = (int) $data['term_years'];
             $this->interest = (float) $data['interest'];
             $this->term_months = (int) $data['term_months'];
             $this->date = $data['starting_date'];
@@ -48,7 +45,6 @@ class LoanAmortization
     {
         $data_format = [
             'loan_amount' => 0,
-            'term_years' => 0,
             'interest' => 0,
             'term_months' => 0,
             'starting_date' => '',
@@ -117,7 +113,6 @@ class LoanAmortization
                 $this->term_months--;
             }
         } else {
-            $paid_months = $this->term_months - $this->remaining_months;
             $i = 1;
             while ($i <= $this->term_months) {
                 $this->date->modify('+1 month');
