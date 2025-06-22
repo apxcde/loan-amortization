@@ -19,14 +19,13 @@ composer require apxcde/loan-amortization
 use Apxcde\LoanAmortization\LoanAmortization;
 
 $amount = 200000;
-$termYears = 5;
+$termMonths = 60;
 $annualInterestRate = 12;
 
 $loan_data = [
     'loan_amount' => (float) $amount,
-    'term_years' => $termYears,
     'interest' => $annualInterestRate,
-    'term_months' => $termYears * 12,
+    'term_months' => $termMonths,
     'starting_date' => Carbon::now(),
     'remaining_months' => $termYears * 12,
 ];
