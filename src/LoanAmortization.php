@@ -92,30 +92,22 @@ class LoanAmortization
     public function getSchedule(): array
     {
         $schedule = [];
+        $totalMonths = $this->term_months;
+        $monthsPaid = $totalMonths - $this->remaining_months;
 
-        if ($this->remaining_months === $this->term_months) {
-            $i = 1;
-            while ($i <= $this->term_months) {
-                $this->date->modify('+1 month');
-                $schedule[] = ['not_paid', $this->calculate()];
-                $this->loan_amount = $this->balance;
-                $this->term_months--;
+        for ($month = 1; $month <= $totalMonths; $month++) {
+            $this->date->modify('+1 month');
+
+            if ($this->remaining_months === $this->term_months) {
+                $status = 'not_paid';
+            } elseif ($month <= $monthsPaid) {
+                $status = 'paid';
+            } else {
+                $status = 'not_paid';
             }
-        } else {
-            $i = 1;
-            while ($i <= $this->term_months) {
-                $this->date->modify('+1 month');
 
-                if ($this->term_months > $this->remaining_months) {
-                    $schedule[] = ['paid', $this->calculate()];
-                    $this->loan_amount = $this->balance;
-                } else {
-                    $schedule[] = ['not_paid', $this->calculate()];
-                    $this->loan_amount = $this->balance;
-                }
-
-                $this->term_months--;
-            }
+            $schedule[] = [$status, $this->calculate()];
+            $this->loan_amount = $this->balance;
         }
 
         return $schedule;
