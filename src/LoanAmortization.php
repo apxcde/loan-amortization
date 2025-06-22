@@ -13,25 +13,25 @@ class LoanAmortization
     private mixed $remaining_months;
     public array $results;
 
-    public function __construct($data)
+    public function __construct(array $data)
     {
-        if ($this->validate($data)) {
-            $this->loan_amount = (float) $data['loan_amount'];
-            $this->interest = (float) $data['interest'];
-            $this->term_months = (int) $data['term_months'];
-            $this->date = $data['starting_date'];
-            $this->remaining_months = $data['remaining_months'];
+        $this->validate($data);
 
-            $this->term_months = ($this->term_months == 0) ? 1 : $this->term_months;
+        $this->loan_amount = (float) $data['loan_amount'];
+        $this->interest = (float) $data['interest'];
+        $this->term_months = (int) $data['term_months'];
+        $this->date = $data['starting_date'];
+        $this->remaining_months = $data['remaining_months'];
 
-            $this->interest = ($this->interest / 12) / 100;
+        $this->term_months = ($this->term_months == 0) ? 1 : $this->term_months;
 
-            $this->results = [
-                'inputs' => $data,
-                'summary' => $this->getSummary(),
-                'schedule' => $this->getSchedule(),
-            ];
-        }
+        $this->interest = ($this->interest / 12) / 100;
+
+        $this->results = [
+            'inputs' => $data,
+            'summary' => $this->getSummary(),
+            'schedule' => $this->getSchedule(),
+        ];
     }
 
     public function getResults(): array
@@ -39,28 +39,19 @@ class LoanAmortization
         return $this->results;
     }
 
-    private function validate($data): bool
+    private function validate(array $data): void
     {
-        $data_format = [
-            'loan_amount' => 0,
-            'interest' => 0,
-            'term_months' => 0,
-            'starting_date' => '',
+        $requiredKeys = [
+            'loan_amount',
+            'interest',
+            'term_months',
+            'starting_date',
         ];
 
-        $validate_data = array_diff_key($data_format, $data);
+        $missing = array_diff($requiredKeys, array_keys($data));
 
-        if (empty($validate_data)) {
-            return true;
-        } else {
-            echo "<div style='background-color:#ccc;padding:0.5em;'>";
-            echo '<p style="color: red; margin:0.5em 0em; font-weight: bold; background-color: #fff; padding: 0.2em;">Missing Values</p>';
-            foreach ($validate_data as $key => $value) {
-                echo ":: Value <b>$key</b> is missing.<br>";
-            }
-            echo "</div>";
-
-            return false;
+        if (! empty($missing)) {
+            throw new \InvalidArgumentException('Missing required keys: '.implode(', ', $missing));
         }
     }
 
