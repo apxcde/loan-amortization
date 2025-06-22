@@ -85,7 +85,11 @@ class LoanAmortization
 
     private function calculate(): array
     {
-        $this->term_pay = $this->loan_amount * ($this->interest / (1 - pow((1 + $this->interest), -$this->term_months)));
+        if ($this->interest == 0.0) {
+            $this->term_pay = $this->loan_amount / $this->term_months;
+        } else {
+            $this->term_pay = $this->loan_amount * ($this->interest / (1 - pow((1 + $this->interest), -$this->term_months)));
+        }
         $interest = $this->loan_amount * $this->interest;
 
         $principal = $this->term_pay - $interest;
