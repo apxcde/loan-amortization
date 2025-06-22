@@ -78,3 +78,12 @@ it('generates schedule with paid months when partial payments were made', functi
     expect(count($paid))->toBe(6)
         ->and(count($notPaid))->toBe(6);
 });
+
+it('throws an exception when required keys are missing', function () {
+    $loanData = [
+        'loan_amount' => 10000.0,
+    ];
+
+    expect(fn () => new LoanAmortization($loanData))
+        ->toThrow(InvalidArgumentException::class, 'Missing required keys');
+});
