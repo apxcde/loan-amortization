@@ -31,8 +31,6 @@ class LoanAmortization
                 'summary' => $this->getSummary(),
                 'schedule' => $this->getSchedule(),
             ];
-
-            return $this->results;
         }
     }
 
