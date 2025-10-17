@@ -48,12 +48,17 @@ class LoanAmortization
             'interest',
             'term_months',
             'starting_date',
+            'remaining_months',
         ];
 
         $missing = array_diff($requiredKeys, array_keys($data));
 
         if (! empty($missing)) {
             throw new \InvalidArgumentException('Missing required keys: '.implode(', ', $missing));
+        }
+
+        if (! $data['starting_date'] instanceof \DateTimeInterface) {
+            throw new \InvalidArgumentException('starting_date must implement DateTimeInterface');
         }
     }
 

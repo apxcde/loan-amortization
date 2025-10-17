@@ -87,3 +87,16 @@ it('throws an exception when required keys are missing', function () {
     expect(fn () => new LoanAmortization($loanData))
         ->toThrow(InvalidArgumentException::class, 'Missing required keys');
 });
+
+it('throws an exception when starting_date is not a DateTimeInterface', function () {
+    $loanData = [
+        'loan_amount' => 10000.0,
+        'interest' => 10,
+        'term_months' => 12,
+        'starting_date' => '2023-01-01',
+        'remaining_months' => 12,
+    ];
+
+    expect(fn () => new LoanAmortization($loanData))
+        ->toThrow(InvalidArgumentException::class, 'starting_date must implement DateTimeInterface');
+});
