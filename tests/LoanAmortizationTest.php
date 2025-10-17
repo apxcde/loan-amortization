@@ -190,3 +190,189 @@ it('maintains state integrity after multiple getResults calls', function () {
     expect(count($paid))->toBe(6)
         ->and(count($notPaid))->toBe(6);
 });
+
+// Edge case tests
+it('handles single month loan', function () {
+    $loanData = [
+        'loan_amount' => 1000.0,
+        'interest' => 12,
+        'term_months' => 1,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 1,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    expect(count($results['schedule']))->toBe(1);
+    expect($results['summary']['monthly_repayment'])->toBeGreaterThan(1000.0);
+});
+
+it('handles very long term loan (30 years)', function () {
+    $loanData = [
+        'loan_amount' => 300000.0,
+        'interest' => 6.5,
+        'term_months' => 360,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 360,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    expect(count($results['schedule']))->toBe(360);
+    expect($results['summary']['monthly_repayment'])->toBeGreaterThan(0);
+    expect($results['summary']['total_interest'])->toBeGreaterThan(100000); // Significant interest for 30 years
+    expect($results['summary']['total_pay'])->toBeGreaterThan(300000.0);
+});
+
+it('handles very high interest rate', function () {
+    $loanData = [
+        'loan_amount' => 10000.0,
+        'interest' => 50,
+        'term_months' => 12,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 12,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    expect($results['summary']['monthly_repayment'])->toBeGreaterThan(833.33);
+    expect($results['summary']['total_interest'])->toBeGreaterThan(0);
+});
+
+it('handles very small loan amount', function () {
+    $loanData = [
+        'loan_amount' => 100.0,
+        'interest' => 5,
+        'term_months' => 6,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 6,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    expect($results['summary']['monthly_repayment'])->toBeGreaterThan(0);
+    expect($results['summary']['total_pay'])->toBeGreaterThan(100.0);
+});
+
+it('handles very large loan amount', function () {
+    $loanData = [
+        'loan_amount' => 10000000.0,
+        'interest' => 7.5,
+        'term_months' => 120,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 120,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    expect($results['summary']['monthly_repayment'])->toBeGreaterThan(0);
+    expect($results['summary']['total_pay'])->toBeGreaterThan(10000000.0);
+    expect(count($results['schedule']))->toBe(120);
+});
+
+it('handles remaining months equal to zero (fully paid loan)', function () {
+    $loanData = [
+        'loan_amount' => 5000.0,
+        'interest' => 10,
+        'term_months' => 12,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 0,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    $schedule = $results['schedule'];
+    $paid = array_filter($schedule, fn ($row) => $row[0] === 'paid');
+
+    expect(count($schedule))->toBe(12);
+    expect(count($paid))->toBe(12);
+});
+
+it('handles remaining months equal to term months (no payments made)', function () {
+    $loanData = [
+        'loan_amount' => 8000.0,
+        'interest' => 8,
+        'term_months' => 18,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 18,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    $schedule = $results['schedule'];
+    $notPaid = array_filter($schedule, fn ($row) => $row[0] === 'not_paid');
+
+    expect(count($schedule))->toBe(18);
+    expect(count($notPaid))->toBe(18);
+});
+
+it('calculates diminishing balance correctly over schedule', function () {
+    $loanData = [
+        'loan_amount' => 10000.0,
+        'interest' => 12,
+        'term_months' => 6,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 6,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    $schedule = $results['schedule'];
+    $previousBalance = 10000.0;
+
+    foreach ($schedule as $payment) {
+        [, $details] = $payment;
+
+        // Balance should decrease each month
+        expect($details['balance'])->toBeLessThan($previousBalance);
+
+        // Principal + Interest should equal payment
+        expect($details['principal'] + $details['interest'])->toEqualWithDelta($details['payment'], 0.01);
+
+        $previousBalance = $details['balance'];
+    }
+
+    // Final balance should be close to zero
+    expect($schedule[count($schedule) - 1][1]['balance'])->toEqualWithDelta(0, 0.01);
+});
+
+it('handles zero term_months by defaulting to 1', function () {
+    $loanData = [
+        'loan_amount' => 5000.0,
+        'interest' => 10,
+        'term_months' => 0,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 1,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    // Should default to 1 month
+    expect(count($results['schedule']))->toBe(1);
+});
+
+it('handles low interest rate (less than 1 percent)', function () {
+    $loanData = [
+        'loan_amount' => 20000.0,
+        'interest' => 0.5,
+        'term_months' => 24,
+        'starting_date' => new DateTime('2023-01-01'),
+        'remaining_months' => 24,
+    ];
+
+    $loan = new LoanAmortization($loanData);
+    $results = $loan->getResults();
+
+    expect($results['summary']['monthly_repayment'])->toBeGreaterThan(833.33);
+    expect($results['summary']['total_interest'])->toBeGreaterThan(0);
+    expect($results['summary']['total_interest'])->toBeLessThan(200);
+});
