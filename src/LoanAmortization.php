@@ -13,7 +13,7 @@ class LoanAmortization
     private float $term_pay;
     private \DateTimeInterface $date;
     private int $remaining_months;
-    public array $results;
+    private ?array $results = null;
 
     public function __construct(array $data)
     {
@@ -22,22 +22,30 @@ class LoanAmortization
         $this->loan_amount = (float) $data['loan_amount'];
         $this->interest = (float) $data['interest'];
         $this->term_months = (int) $data['term_months'];
-        $this->date = $data['starting_date'];
+        $this->date = clone $data['starting_date'];
         $this->remaining_months = $data['remaining_months'];
 
         $this->term_months = ($this->term_months == 0) ? 1 : $this->term_months;
 
         $this->interest = ($this->interest / 12) / 100;
-
-        $this->results = [
-            'inputs' => $data,
-            'summary' => $this->getSummary(),
-            'schedule' => $this->getSchedule(),
-        ];
     }
 
     public function getResults(): array
     {
+        if ($this->results === null) {
+            $this->results = [
+                'inputs' => [
+                    'loan_amount' => $this->loan_amount,
+                    'interest' => ($this->interest * 12) * 100,
+                    'term_months' => $this->term_months,
+                    'starting_date' => $this->date,
+                    'remaining_months' => $this->remaining_months,
+                ],
+                'summary' => $this->getSummary(),
+                'schedule' => $this->getSchedule(),
+            ];
+        }
+
         return $this->results;
     }
 
@@ -102,8 +110,20 @@ class LoanAmortization
         $totalMonths = $this->term_months;
         $monthsPaid = $totalMonths - $this->remaining_months;
 
+        // Use local variables to avoid mutating instance state
+        $currentLoanAmount = $this->loan_amount;
+        $currentDate = \DateTime::createFromInterface($this->date);
+        $monthlyInterestRate = $this->interest;
+
+        // Calculate monthly payment
+        if ($monthlyInterestRate == 0.0) {
+            $termPay = $currentLoanAmount / $totalMonths;
+        } else {
+            $termPay = $currentLoanAmount * ($monthlyInterestRate / (1 - pow((1 + $monthlyInterestRate), -$totalMonths)));
+        }
+
         for ($month = 1; $month <= $totalMonths; $month++) {
-            $this->date->modify('+1 month');
+            $currentDate = $currentDate->modify('+1 month');
 
             if ($this->remaining_months === $this->term_months) {
                 $status = 'not_paid';
@@ -113,8 +133,23 @@ class LoanAmortization
                 $status = 'not_paid';
             }
 
-            $schedule[] = [$status, $this->calculate()];
-            $this->loan_amount = $this->balance;
+            // Calculate payment details for this month
+            $interest = $currentLoanAmount * $monthlyInterestRate;
+            $principal = $termPay - $interest;
+            $balance = $currentLoanAmount - $principal;
+
+            $schedule[] = [
+                $status,
+                [
+                    'payment' => $termPay,
+                    'interest' => $interest,
+                    'principal' => $principal,
+                    'balance' => $balance,
+                    'date' => $currentDate->format('Y-m-d'),
+                ],
+            ];
+
+            $currentLoanAmount = $balance;
         }
 
         return $schedule;
